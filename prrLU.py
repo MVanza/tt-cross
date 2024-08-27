@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class prrLU:
-    
+
     result_L = None
     result_D = None
     result_U = None
@@ -31,7 +31,7 @@ class prrLU:
         if self.debug:
             print(f"blocks is A11 = {A11}, A12 = {A12}, A21 = {A21} and A22 = {A22}")
         if A11.shape == (1, 1):
-            second = np.outer((A21 * 1/A11[0]), A12)
+            second = np.outer((A21 * 1 / A11[0]), A12)
         else:
             if A12.ndim == 0:
                 second = A21 * inv(A11) * A12
@@ -42,29 +42,48 @@ class prrLU:
         if self.debug:
             print(f"second is {second} and compliment is {shurcomp}")
         return shurcomp
-    
+
     def _ldu_decompose(self, A11, A12, A21, A22, shur_compliment):
         if A11.shape != (1, 1):
             inv_A11 = inv(A11)
-            L = np.block([[np.eye(N = A11.shape[0], M = A11.shape[1]), np.zeros(A12.shape)], 
-                          [A21 @ inv_A11, np.eye(N = A22.shape[0], M = A22.shape[1])]])
-            D = np.block([[A11, np.zeros(A12.shape)], 
-                          [np.zeros(A21.shape), shur_compliment]])
-            U = np.block([[np.eye(N = A11.shape[0], M = A11.shape[1]), inv_A11 @ A12 ], 
-                          [np.zeros(A21.shape), np.eye(N = A22.shape[0], M = A22.shape[1])]])
+            L = np.block(
+                [
+                    [np.eye(N=A11.shape[0], M=A11.shape[1]), np.zeros(A12.shape)],
+                    [A21 @ inv_A11, np.eye(N=A22.shape[0], M=A22.shape[1])],
+                ]
+            )
+            D = np.block(
+                [[A11, np.zeros(A12.shape)], [np.zeros(A21.shape), shur_compliment]]
+            )
+            U = np.block(
+                [
+                    [np.eye(N=A11.shape[0], M=A11.shape[1]), inv_A11 @ A12],
+                    [np.zeros(A21.shape), np.eye(N=A22.shape[0], M=A22.shape[1])],
+                ]
+            )
         else:
-            inv_A11 = 1/A11[0]
-            L = np.block([[1, np.zeros(A12.shape)], 
-                          [A21 * inv_A11, np.eye(N = A22.shape[0], M = A22.shape[1])]])
-            D = np.block([[A11, np.zeros(A12.shape)], 
-                          [np.zeros(A21.shape), shur_compliment]])
-            U = np.block([[1, inv_A11 * A12 ], 
-                          [np.zeros(A21.shape), np.eye(N = A22.shape[0], M = A22.shape[1])]])
-        
+            inv_A11 = 1 / A11[0]
+            L = np.block(
+                [
+                    [1, np.zeros(A12.shape)],
+                    [A21 * inv_A11, np.eye(N=A22.shape[0], M=A22.shape[1])],
+                ]
+            )
+            D = np.block(
+                [[A11, np.zeros(A12.shape)], [np.zeros(A21.shape), shur_compliment]]
+            )
+            U = np.block(
+                [
+                    [1, inv_A11 * A12],
+                    [np.zeros(A21.shape), np.eye(N=A22.shape[0], M=A22.shape[1])],
+                ]
+            )
+
         return L, D, U
 
-
-    def find_decomposition(self, matrix, step_num: Optional[int] = None, print_steps = False):
+    def find_decomposition(
+        self, matrix, step_num: Optional[int] = None, print_steps=False
+    ):
         A = matrix.copy()
         if A.ndim < 2:
             raise ValueError("Scalar and vectors are not allowed")
@@ -78,7 +97,7 @@ class prrLU:
         U = np.eye(A.shape[0])
         for step in range(1, step_num):
 
-            A = self._permut(A, step-1)
+            A = self._permut(A, step - 1)
 
             # get blocks
             A11 = A[:step, :step]
@@ -88,28 +107,38 @@ class prrLU:
 
             shur_compliment = self._get_shur_comp(A11, A12, A21, A22)
 
-            L_new, D_new, U_new = self._ldu_decompose(A11, A12, A21, A22, shur_compliment)
+            L_new, D_new, U_new = self._ldu_decompose(
+                A11, A12, A21, A22, shur_compliment
+            )
 
             if self.debug:
-                print(f"Matrices after ldu decompositions on step {step}:\n",
-                      f"Matrix L is {L_new}\n Matrix D is {D_new}\n Matrix U is {U_new}")
-                
-            L, U= L @ L_new, U @ U_new
+                print(
+                    f"Matrices after ldu decompositions on step {step}:\n",
+                    f"Matrix L is {L_new}\n Matrix D is {D_new}\n Matrix U is {U_new}",
+                )
+
+            L, U = L @ L_new, U @ U_new
             A = D_new
 
             if print_steps:
-                print(f"LDU decompositions on step {step}:\n",
-                      f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}")
+                print(
+                    f"LDU decompositions on step {step}:\n",
+                    f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}",
+                )
 
             if (shur_compliment == 0).all():
                 self.result_rank = step
                 self.result_D = A
                 self.result_L = L
                 self.result_U = U
-                print(f"Decomposition with max rank was found. Matrix rank is {self.result_rank}.\n",
-                      f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}")
+                print(
+                    f"Decomposition with max rank was found. Matrix rank is {self.result_rank}.\n",
+                    f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}",
+                )
                 return L, A, U, step
-        
-        print(f"Decomposition with rank {step_num} was found.\n",
-              f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}")
+
+        print(
+            f"Decomposition with rank {step_num} was found.\n",
+            f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}",
+        )
         return L, A, U, step_num
