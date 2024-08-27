@@ -52,7 +52,7 @@ class PrrLU:
             else:
                 second = A21 @ inv(A11) @ A12
         shurcomp = A22 - second
-        shurcomp = np.where(np.abs(shurcomp) < 1e-15, 0, shurcomp)
+        shurcomp = np.where(np.abs(shurcomp) < 1e-10, 0, shurcomp)
         if self.debug:
             print(f"second is {second} and compliment is {shurcomp}")
         return shurcomp
@@ -133,7 +133,7 @@ class PrrLU:
                     f"Matrix L is {L_new}\n Matrix D is {D_new}\n Matrix U is {U_new}",
                 )
 
-            L, U = L @ L_new, U @ U_new
+            L, U = L @ L_new, U_new @ U
             A = D_new
 
             if print_steps:
