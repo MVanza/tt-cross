@@ -26,4 +26,4 @@ jobs:
         black . --check 
     - name: Run tests
       run: |
-        python3 test/matrix_test.py
+        pytest test/
