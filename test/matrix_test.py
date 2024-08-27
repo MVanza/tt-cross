@@ -8,7 +8,6 @@ def test_A():
     A = np.array([[2, 4], [3, 5]])
     c = PrrLU()
     L, D, U, chi = c.find_decomposition(A)
-    print(D)
     L_check = np.array([[1, 0], [4 / 5, 1]])
     D_check = np.array([[5, 0], [0, -2 / 5]])
     U_check = np.array([[1, 3 / 5], [0, 1]])
@@ -32,4 +31,4 @@ def test_B():
 def test_C():
     C = np.array([[2, 3, 4], [3, 4, 5], [1, 5, 9]])
     c = PrrLU()
-    L, D, U, chi = c.find_decomposition(C)    
+    L, D, U, chi = c.find_decomposition(C)

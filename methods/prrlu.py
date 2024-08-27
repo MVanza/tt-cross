@@ -8,6 +8,12 @@ from numpy.linalg import inv
 from scipy.linalg import lu
 from typing import Optional
 
+DECS = 10
+
+
+def trunc(values, decs):
+    return np.trunc(values * 10**decs) / (10**decs)
+
 
 class PrrLU:
     """
@@ -46,7 +52,7 @@ class PrrLU:
             else:
                 second = A21 @ inv(A11) @ A12
         shurcomp = A22 - second
-        shurcomp = np.where(shurcomp < 1e-15, 0, shurcomp)
+        shurcomp = np.where(np.abs(shurcomp) < 1e-15, 0, shurcomp)
         if self.debug:
             print(f"second is {second} and compliment is {shurcomp}")
         return shurcomp
@@ -86,7 +92,9 @@ class PrrLU:
                     [np.zeros(A21.shape), np.eye(N=A22.shape[0], M=A22.shape[1])],
                 ]
             )
-
+        L = trunc(L, DECS)
+        D = trunc(D, DECS)
+        U = trunc(U, DECS)
         return L, D, U
 
     def find_decomposition(
