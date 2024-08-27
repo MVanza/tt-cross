@@ -1,10 +1,18 @@
+"""
+Partial rank-revealing LU decomposition. 
+https://arxiv.org/abs/2407.02454, section 3.3
+"""
+
 import numpy as np
 from numpy.linalg import inv
 from scipy.linalg import lu
 from typing import Optional
 
 
-class prrLU:
+class PrrLU:
+    """
+    Full search prrLU algorithm.
+    """
 
     result_L = None
     result_D = None

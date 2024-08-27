@@ -19,7 +19,7 @@ jobs:
         pip install -r requirements.txt      
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py') --fail-under 4
+        pylint $(git ls-files '*.py') --recursive y --max-line-length 160 --fail-under 4 -d invalid-name
     - name: Analysing the code with black
       run: |
         black . --check 
