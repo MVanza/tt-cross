@@ -12,11 +12,11 @@ from random import seed, randint
 DECS = 14
 
 
-def trunc(values, decs):
-    return np.trunc(values * 10**decs) / (10**decs)
+def trunc(values):
+    return np.trunc(values * 10**DECS) / (10**DECS)
 
 
-class PrrLU:
+class FullSearch:
     """
     Full search prrLU algorithm.
     """
@@ -25,12 +25,14 @@ class PrrLU:
     result_D = None
     result_U = None
     result_rank = None
-    r_permut_list = []
-    c_permut_list = []
+
+    pivot_set = {}
 
     def __init__(self, inverse_need: bool = False, debug: bool = False):
         self.debug = debug
         self.inverse_need = inverse_need
+        self.r_permut_list = []
+        self.c_permut_list = []
 
     def _permut(self, old_A, top_left_ind):
         if not self.r_permut_list:
@@ -59,11 +61,11 @@ class PrrLU:
             )
         old_A[top_left_ind:, top_left_ind:] = A
 
-        print(self.r_permut_list)
-        print(self.c_permut_list)
-
         if self.debug:
             print(f"A after permut is\n{old_A}")
+            print(
+                f"Permut list for row is {self.r_permut_list} and for column {self.c_permut_list}"
+            )
         return old_A
 
     def _get_shur_comp(self, A11, A12, A21, A22):
@@ -117,10 +119,13 @@ class PrrLU:
                     [np.zeros(A21.shape), np.eye(N=A22.shape[0], M=A22.shape[1])],
                 ]
             )
-        L = trunc(L, DECS)
-        D = trunc(D, DECS)
-        U = trunc(U, DECS)
+        L = trunc(L)
+        D = trunc(D)
+        U = trunc(U)
         return L, D, U
+
+    def get_pivots(self):
+        return self.pivot_set
 
     def find_decomposition(
         self, matrix, step_num: Optional[int] = None, print_steps=False
@@ -132,7 +137,7 @@ class PrrLU:
             raise ValueError("Matrix should be square")
         if step_num is None:
             step_num = A.shape[0]
-        if step_num < 1:
+        if step_num <= 1:
             raise ValueError("Incorrect chi parameter")
         L = np.eye(A.shape[0])
         U = np.eye(A.shape[0])
@@ -158,7 +163,8 @@ class PrrLU:
                     f"Matrix L is \n{L_new}\n Matrix D is \n{D_new}\n Matrix U is \n{U_new}",
                 )
 
-            L, U = L @ L_new, U_new @ U
+            L = L @ L_new
+            U = U_new @ U
             A = D_new
 
             if print_steps:
@@ -176,10 +182,26 @@ class PrrLU:
                     f"Decomposition with max rank was found. Matrix rank is {self.result_rank}.\n",
                     f"Matrix L is\n{L}\n Matrix D is\n{A}\n Matrix U is\n{U}",
                 )
+                self.pivot_set = {
+                    "I": self.r_permut_list[:step],
+                    "J": self.c_permut_list[:step],
+                }
+                if self.debug:
+                    print(
+                        f"row pivots is {self.pivot_set['I']} and column pivots is {self.pivot_set['J']}"
+                    )
                 return L, A, U, step
 
         print(
             f"Decomposition with rank {step_num} was found.\n",
             f"Matrix L is\n{L}\n Matrix D is\n{A}\n Matrix U is\n{U}",
         )
+        self.pivot_set = {
+            "I": self.r_permut_list[: step_num - 1],
+            "J": self.c_permut_list[: step_num - 1],
+        }
+        if self.debug:
+            print(
+                f"row pivots is {self.pivot_set['I']} and column pivots is {self.pivot_set['J']}"
+            )
         return L, A, U, step_num
