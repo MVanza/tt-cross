@@ -4,11 +4,12 @@ https://arxiv.org/abs/2407.02454, section 3.3
 """
 
 import numpy as np
-from numpy.linalg import inv
+from numpy.linalg import inv, LinAlgError
 from scipy.linalg import lu
 from typing import Optional
+from random import seed, randint
 
-DECS = 10
+DECS = 14
 
 
 def trunc(values, decs):
@@ -24,21 +25,45 @@ class PrrLU:
     result_D = None
     result_U = None
     result_rank = None
+    r_permut_list = []
+    c_permut_list = []
 
-    def __init__(self, debug: bool = False):
+    def __init__(self, inverse_need: bool = False, debug: bool = False):
         self.debug = debug
+        self.inverse_need = inverse_need
 
     def _permut(self, old_A, top_left_ind):
+        if not self.r_permut_list:
+            self.r_permut_list = list(range(old_A.shape[0]))
+        if not self.c_permut_list:
+            self.c_permut_list = list(range(old_A.shape[1]))
         A = old_A[top_left_ind:, top_left_ind:]
-        abs_A = np.abs(A)
-        idx_r, idx_c = np.asarray(abs_A == np.max(abs_A)).nonzero()
+        idx_r, idx_c = np.asarray(np.abs(A) == np.max(np.abs(A))).nonzero()
         if idx_r[0] != 0:
             A[[idx_r[0], 0], :] = A[[0, idx_r[0]], :]
+            (
+                self.r_permut_list[idx_r[0] + top_left_ind],
+                self.r_permut_list[0 + top_left_ind],
+            ) = (
+                self.r_permut_list[0 + top_left_ind],
+                self.r_permut_list[idx_r[0] + top_left_ind],
+            )
         if idx_c[0] != 0:
             A[:, [idx_c[0], 0]] = A[:, [0, idx_c[0]]]
+            (
+                self.c_permut_list[idx_c[0] + top_left_ind],
+                self.c_permut_list[0 + top_left_ind],
+            ) = (
+                self.c_permut_list[0 + top_left_ind],
+                self.c_permut_list[idx_c[0] + top_left_ind],
+            )
         old_A[top_left_ind:, top_left_ind:] = A
+
+        print(self.r_permut_list)
+        print(self.c_permut_list)
+
         if self.debug:
-            print(f"A after permut is {old_A}")
+            print(f"A after permut is\n{old_A}")
         return old_A
 
     def _get_shur_comp(self, A11, A12, A21, A22):
@@ -54,7 +79,7 @@ class PrrLU:
         shurcomp = A22 - second
         shurcomp = np.where(np.abs(shurcomp) < 1e-10, 0, shurcomp)
         if self.debug:
-            print(f"second is {second} and compliment is {shurcomp}")
+            print(f"second is \n{second} and compliment is \n{shurcomp}")
         return shurcomp
 
     def _ldu_decompose(self, A11, A12, A21, A22, shur_compliment):
@@ -130,7 +155,7 @@ class PrrLU:
             if self.debug:
                 print(
                     f"Matrices after ldu decompositions on step {step}:\n",
-                    f"Matrix L is {L_new}\n Matrix D is {D_new}\n Matrix U is {U_new}",
+                    f"Matrix L is \n{L_new}\n Matrix D is \n{D_new}\n Matrix U is \n{U_new}",
                 )
 
             L, U = L @ L_new, U_new @ U
@@ -139,7 +164,7 @@ class PrrLU:
             if print_steps:
                 print(
                     f"LDU decompositions on step {step}:\n",
-                    f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}",
+                    f"Matrix L is\n{L}\n Matrix D is\n{A}\n Matrix U is\n{U}",
                 )
 
             if (shur_compliment == 0).all():
@@ -149,12 +174,12 @@ class PrrLU:
                 self.result_U = U
                 print(
                     f"Decomposition with max rank was found. Matrix rank is {self.result_rank}.\n",
-                    f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}",
+                    f"Matrix L is\n{L}\n Matrix D is\n{A}\n Matrix U is\n{U}",
                 )
                 return L, A, U, step
 
         print(
             f"Decomposition with rank {step_num} was found.\n",
-            f"Matrix L is {L}\n Matrix D is {A}\n Matrix U is {U}",
+            f"Matrix L is\n{L}\n Matrix D is\n{A}\n Matrix U is\n{U}",
         )
         return L, A, U, step_num

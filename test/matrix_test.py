@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from methods.prrlu import PrrLU
 
-DECS = 10
+DECS = 14
 
 
 def trunc(values):
